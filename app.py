@@ -149,7 +149,7 @@ def send_message(recipient_id, message_text):
 
 def valueFromElement(element):
     if element.text is None:
-        return 0
+        return "0"
     else:
         return element.text
 
