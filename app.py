@@ -41,7 +41,7 @@ def webhook():
                     recipient_id = messaging_event["recipient"]["id"]  # the recipient's ID, which should be your page's facebook ID
                     message_text = messaging_event["message"]["text"]  # the message's text
 
-                    send_message(sender_id, "roger that!")
+                    send_message(sender_id, message_text)
 
                 if messaging_event.get("delivery"):  # delivery confirmation
                     pass
@@ -56,6 +56,8 @@ def webhook():
 
 
 def send_message(recipient_id, message_text):
+    log("MESSAGE_TEST")
+    log(message_text)
 
     weartherData = requests.get("http://www.ilmateenistus.ee/ilma_andmed/xml/maailma_linnad.php")
     root = ElementTree.fromstring(weartherData.content);
@@ -85,7 +87,7 @@ def send_message(recipient_id, message_text):
         nameEst = country.find('name_est').text
         nameEng = country.find('name_eng').text
 
-        if nameEng in message_text or nameEst in message_text:
+        if nameEng.lower() in message_text.lower() or nameEst.lower() in message_text.lower():
             template = copy.deepcopy(cardTemplate);
 
             template["title"] = nameEng;
@@ -124,7 +126,7 @@ def send_message(recipient_id, message_text):
         }
     })
 
-    if response["attachment"]["payload"]["elements"].length > 0:
+    if len(response["attachment"]["payload"]["elements"]) > 0:
         data = json.dumps({
             "recipient": {
                 "id": recipient_id
