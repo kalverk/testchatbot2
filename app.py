@@ -92,11 +92,19 @@ def send_message(recipient_id, message_text):
 
             template["title"] = nameEng;
 
-            temperature = country.find('temperature');
-            rainfall = country.find('precipitations');
-            wind = country.find('wind');
+            temperatureElement = country.find('temperature')
+            temperature = valueFromElement(temperatureElement)
+            temperatureUnit = temperatureElement.get('units')
 
-            template["subtitle"] = "Temperature " + temperature.text  + temperature.get('units') + ", rainfall " + rainfall.text + rainfall.get('units') + ", wind " + wind.text + wind.get('units');
+            rainfallElement = country.find('precipitations')
+            rainfall = valueFromElement(rainfallElement)
+            rainfallUnit = rainfallElement.get('units')
+
+            windElement = country.find('wind');
+            wind = valueFromElement(windElement)
+            windUnit = windElement.get('units')
+
+            template["subtitle"] = "Temperature " + temperature + temperatureUnit + ", rainfall " + rainfall + rainfallUnit + ", wind " + wind + windUnit;
 
             template["image_url"] = "https://placeholdit.co/i/500x250";
             template["buttons"][0]["url"] = "http://www.google.com/search?q=" + nameEng;
@@ -139,6 +147,11 @@ def send_message(recipient_id, message_text):
         log(r.status_code)
         log(r.text)
 
+def valueFromElement(element):
+    if element.text is None:
+        return 0
+    else:
+        return element.text
 
 def log(message):  # simple wrapper for logging to stdout on heroku
     print str(message)
