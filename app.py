@@ -58,8 +58,7 @@ def webhook():
 def send_message(recipient_id, message_text):
 
     weartherData = requests.get("http://www.ilmateenistus.ee/ilma_andmed/xml/maailma_linnad.php")
-    tree = ElementTree.fromstring(weartherData.content);
-    root = tree.getroot();
+    root = ElementTree.fromstring(weartherData.content);
 
     cardTemplate = {
                        "title": "",
