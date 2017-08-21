@@ -55,6 +55,9 @@ def webhook():
 
 def send_message(recipient_id, message_text):
 
+    weartherData = requests.get("http://www.ilmateenistus.ee/ilma_andmed/xml/maailma_linnad.php")
+    log(weartherData.content);
+
     messageData = {
         "attachment": {
             "type": "template",
