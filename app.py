@@ -4,6 +4,8 @@ import json
 
 import requests
 from flask import Flask, request
+from xml.etree import ElementTree
+import copy
 
 app = Flask(__name__)
 
@@ -56,39 +58,53 @@ def webhook():
 def send_message(recipient_id, message_text):
 
     weartherData = requests.get("http://www.ilmateenistus.ee/ilma_andmed/xml/maailma_linnad.php")
-    log(weartherData.content);
+    tree = ElementTree.fromstring(weartherData.content);
+    root = tree.getroot();
 
-    messageData = {
+    cardTemplate = {
+                       "title": "",
+                       "subtitle": "",
+                       "image_url": "",
+                       "buttons": [{
+                           "type": "web_url",
+                           "url": "",
+                           "title": ""
+                       }],
+                   };
+
+    response = {
         "attachment": {
             "type": "template",
             "payload": {
                 "template_type": "generic",
-                "elements": [{
-                    "title": "First card",
-                    "subtitle": "Element #1 of an hscroll",
-                    "image_url": "https://placeholdit.co/i/500x250?bg=111111",
-                    "buttons": [{
-                        "type": "web_url",
-                        "url": "https://www.messenger.com",
-                        "title": "web url"
-                    }, {
-                        "type": "postback",
-                        "title": "Postback",
-                        "payload": "Payload for first element in a generic bubble",
-                    }],
-                }, {
-                    "title": "Second card",
-                    "subtitle": "Element #2 of an hscroll",
-                    "image_url": "https://placeholdit.co/i/500x250",
-                    "buttons": [{
-                        "type": "postback",
-                        "title": "Postback",
-                        "payload": "Payload for second element in a generic bubble",
-                    }],
-                }]
+                "elements": []
             }
         }
     };
+
+    for country in root.findall('station'):
+        nameEst = country.find('name_est').text
+        nameEng = country.find('name_eng').text
+
+        if nameEng in message_text or nameEst in message_text:
+            template = copy.deepcopy(cardTemplate);
+
+            template["title"] = nameEng;
+
+            temperature = country.find('temperature');
+            rainfall = country.find('precipitations');
+            wind = country.find('wind');
+
+            template["subtitle"] = "Temperature " + temperature.text  + temperature.get('units') + ", rainfall " + rainfall.text + rainfall.get('units') + ", wind " + wind.text + wind.get('units');
+
+            template["image_url"] = "https://placeholdit.co/i/500x250";
+            template["buttons"][0]["url"] = "http://www.google.com/search?q=" + nameEng;
+            template["buttons"][0]["title"] = nameEng;
+
+            response["attachment"]["payload"]["elements"].append(template);
+
+
+    log(response)
 
     log("sending message to {recipient}: {text}".format(recipient=recipient_id, text=message_text))
 
@@ -105,7 +121,7 @@ def send_message(recipient_id, message_text):
         # "message": {
         #     "text": message_text
         # },
-        "message": messageData
+        "message": response
     })
     r = requests.post("https://graph.facebook.com/v2.6/me/messages", params=params, headers=headers, data=data)
     if r.status_code != 200:
